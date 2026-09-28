@@ -8,9 +8,16 @@ use App\Http\Controllers\Customer\AccountController;
 use App\Http\Controllers\Customer\Auth\CustomerAuthenticatedSessionController;
 use App\Http\Controllers\Customer\Auth\CustomerRegisteredUserController;
 use App\Http\Controllers\Customer\CustomerPasswordController;
+use App\Http\Controllers\Customer\CustomerProfileController;
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\SubcategoryController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CouponController;
+use App\Http\Controllers\OrderController;
 
 // Home
 
@@ -48,11 +55,34 @@ Route::prefix('admin')->name('admin.')->group(function () {
         ])->name('dashboard');
 
         // Category
-
         Route::resource('categories', CategoryController::class)
             ->except(['show']);
+        
+        // SubCategory
+        Route::resource('subcategories', SubcategoryController::class)
+            ->except(['show']);
 
+        // Product    
+        Route::resource('products', ProductController::class)
+            ->except(['show']);
 
+        // Inventory
+        Route::resource('inventories', InventoryController::class)
+            ->except(['show']);
+
+        // Orders
+        Route::resource('orders', OrderController::class)
+            ->except(['show']);
+        
+        // Coupon
+        Route::resource('coupons', CouponController::class)
+            ->except(['show']);
+
+        // Customer
+        Route::resource('customers', CustomerController::class)
+            ->except(['show']);
+
+        // Logout
         Route::post('/logout', [
             AdminAuthenticatedSessionController::class,
             'destroy',

@@ -1,3 +1,4 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     FiArrowLeft,
@@ -8,6 +9,7 @@ import {
 export default function Create({
     categories = [],
     subcategories = [],
+    admin
 }) {
     const {
         data,
@@ -38,7 +40,7 @@ export default function Create({
     };
 
     return (
-        <>
+        <DashboardLayout admin={admin} title="Create Product">
             <Head title="Create Product" />
 
             <div className="min-h-screen bg-gray-100">
@@ -372,6 +374,6 @@ export default function Create({
                     </div>
                 </div>
             </div>
-        </>
+        </DashboardLayout>
     );
 }

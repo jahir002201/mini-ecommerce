@@ -1,3 +1,4 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     FiArrowLeft,
@@ -8,6 +9,7 @@ import {
 export default function Edit({
     subcategory,
     categories = [],
+    admin
 }) {
     const {
         data,
@@ -37,7 +39,7 @@ export default function Edit({
     };
 
     return (
-        <>
+        <DashboardLayout admin={admin} title="Edit Subcategory">
             <Head
                 title={`Edit Subcategory - ${subcategory.name}`}
             />
@@ -224,6 +226,6 @@ export default function Edit({
                     </div>
                 </div>
             </div>
-        </>
+        </DashboardLayout>
     );
 }

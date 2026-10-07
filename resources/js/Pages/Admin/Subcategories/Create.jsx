@@ -1,3 +1,4 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     FiArrowLeft,
@@ -5,7 +6,7 @@ import {
     FiSave,
 } from 'react-icons/fi';
 
-export default function Create({ categories = [] }) {
+export default function Create({ categories = [], admin }) {
     const {
         data,
         setData,
@@ -27,7 +28,7 @@ export default function Create({ categories = [] }) {
     };
 
     return (
-        <>
+        <DashboardLayout admin={admin} title="Create Subcategory">
             <Head title="Create Subcategory" />
 
             <div className="min-h-screen bg-gray-100">
@@ -198,6 +199,6 @@ export default function Create({ categories = [] }) {
                     </div>
                 </div>
             </div>
-        </>
+        </DashboardLayout>
     );
 }

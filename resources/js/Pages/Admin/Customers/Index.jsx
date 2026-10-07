@@ -1,3 +1,4 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, router } from '@inertiajs/react';
 import {
     FiEdit,
@@ -6,7 +7,7 @@ import {
     FiUsers,
 } from 'react-icons/fi';
 
-export default function Index({ customers, flash }) {
+export default function Index({ customers, flash, admin }) {
     const deleteCustomer = (id) => {
         if (confirm('Are you sure you want to delete this customer?')) {
             router.delete(route('admin.customers.destroy', id), {
@@ -16,7 +17,7 @@ export default function Index({ customers, flash }) {
     };
 
     return (
-        <>
+        <DashboardLayout admin={admin} title="Customers">
             <Head title="Customers" />
 
             <div className="min-h-screen bg-gray-100">
@@ -175,6 +176,6 @@ export default function Index({ customers, flash }) {
                     </div>
                 </div>
             </div>
-        </>
+        </DashboardLayout>
     );
 }

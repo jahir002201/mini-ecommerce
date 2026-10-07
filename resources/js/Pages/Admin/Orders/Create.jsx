@@ -1,3 +1,4 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     FiArrowLeft,
@@ -5,7 +6,7 @@ import {
     FiShoppingCart,
 } from 'react-icons/fi';
 
-export default function Create({ customers = [] }) {
+export default function Create({ customers = [], admin }) {
     const { data, setData, post, processing, errors } = useForm({
         order_id: '',
         customer_id: '',
@@ -24,7 +25,7 @@ export default function Create({ customers = [] }) {
     };
 
     return (
-        <>
+        <DashboardLayout admin={admin} title="Create Order">
             <Head title="Create Order" />
 
             <div className="min-h-screen bg-gray-100">
@@ -286,6 +287,6 @@ export default function Create({ customers = [] }) {
                     </div>
                 </div>
             </div>
-        </>
+        </DashboardLayout>
     );
 }

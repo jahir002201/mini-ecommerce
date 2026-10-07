@@ -1,12 +1,26 @@
 import { useState } from "react";
 import { Link, usePage } from "@inertiajs/react";
+import {
+    FiMenu,
+    FiX,
+    FiLogIn,
+    FiUserPlus,
+    FiLogOut,
+} from "react-icons/fi";
 
 export default function HomeNavbar() {
     const [open, setOpen] = useState(false);
-    const { url } = usePage();
+
+    const { url, props } = usePage();
+
+    const customer = props.auth?.customer;
 
     const isActive = (path) => {
         return url === path;
+    };
+
+    const closeMenu = () => {
+        setOpen(false);
     };
 
     return (
@@ -23,6 +37,7 @@ export default function HomeNavbar() {
 
                 {/* Desktop Navigation */}
                 <nav className="hidden items-center gap-8 md:flex">
+
                     <Link
                         href="/"
                         className={`font-medium transition ${
@@ -47,34 +62,65 @@ export default function HomeNavbar() {
 
                     <Link
                         href="/about"
-                        className="font-medium text-gray-700 transition hover:text-indigo-600"
+                        className={`font-medium transition ${
+                            url.startsWith("/about")
+                                ? "text-indigo-600"
+                                : "text-gray-700 hover:text-indigo-600"
+                        }`}
                     >
                         About
                     </Link>
 
                     <Link
                         href="/contact"
-                        className="font-medium text-gray-700 transition hover:text-indigo-600"
+                        className={`font-medium transition ${
+                            url.startsWith("/contact")
+                                ? "text-indigo-600"
+                                : "text-gray-700 hover:text-indigo-600"
+                        }`}
                     >
                         Contact
                     </Link>
                 </nav>
 
-                {/* Right Side */}
+                {/* Desktop Right Side */}
                 <div className="hidden items-center gap-3 md:flex">
-                    <Link
-                        href="/customer/login"
-                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-indigo-600 hover:text-indigo-600"
-                    >
-                        Login
-                    </Link>
 
-                    <Link
-                        href="/customer/register"
-                        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
-                    >
-                        Register
-                    </Link>
+                    {!customer ? (
+                        <>
+                            <Link
+                                href="/customer/login"
+                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-indigo-600 hover:text-indigo-600"
+                            >
+                                <FiLogIn />
+                                Login
+                            </Link>
+
+                            <Link
+                                href="/customer/register"
+                                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                            >
+                                <FiUserPlus />
+                                Register
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            <span className="text-sm font-medium text-gray-700">
+                                Hi, {customer.name}
+                            </span>
+
+                            <Link
+                                href="/customer/logout"
+                                method="post"
+                                as="button"
+                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-red-500 hover:text-red-600"
+                            >
+                                <FiLogOut />
+                                Logout
+                            </Link>
+                        </>
+                    )}
                 </div>
 
                 {/* Mobile Menu Button */}
@@ -82,63 +128,122 @@ export default function HomeNavbar() {
                     type="button"
                     onClick={() => setOpen(!open)}
                     className="rounded-lg p-2 text-gray-700 hover:bg-gray-100 md:hidden"
+                    aria-label="Toggle navigation menu"
                 >
-                    {open ? "✕" : "☰"}
+                    {open ? (
+                        <FiX className="text-xl" />
+                    ) : (
+                        <FiMenu className="text-xl" />
+                    )}
                 </button>
             </div>
 
             {/* Mobile Menu */}
             {open && (
-                <div className="border-t bg-white md:hidden">
+                <div className="border-t border-gray-200 bg-white md:hidden">
                     <nav className="mx-auto max-w-7xl space-y-1 px-4 py-4">
 
+                        {/* Home */}
                         <Link
                             href="/"
-                            onClick={() => setOpen(false)}
-                            className="block rounded-lg px-4 py-3 font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                            onClick={closeMenu}
+                            className={`block rounded-lg px-4 py-3 font-medium ${
+                                isActive("/")
+                                    ? "bg-indigo-50 text-indigo-600"
+                                    : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                            }`}
                         >
                             Home
                         </Link>
 
+                        {/* Shop */}
                         <Link
                             href="/shop"
-                            onClick={() => setOpen(false)}
-                            className="block rounded-lg px-4 py-3 font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                            onClick={closeMenu}
+                            className={`block rounded-lg px-4 py-3 font-medium ${
+                                url.startsWith("/shop")
+                                    ? "bg-indigo-50 text-indigo-600"
+                                    : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                            }`}
                         >
                             Shop
                         </Link>
 
+                        {/* About */}
                         <Link
                             href="/about"
-                            onClick={() => setOpen(false)}
-                            className="block rounded-lg px-4 py-3 font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                            onClick={closeMenu}
+                            className={`block rounded-lg px-4 py-3 font-medium ${
+                                url.startsWith("/about")
+                                    ? "bg-indigo-50 text-indigo-600"
+                                    : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                            }`}
                         >
                             About
                         </Link>
 
+                        {/* Contact */}
                         <Link
                             href="/contact"
-                            onClick={() => setOpen(false)}
-                            className="block rounded-lg px-4 py-3 font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                            onClick={closeMenu}
+                            className={`block rounded-lg px-4 py-3 font-medium ${
+                                url.startsWith("/contact")
+                                    ? "bg-indigo-50 text-indigo-600"
+                                    : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                            }`}
                         >
                             Contact
                         </Link>
 
-                        <div className="flex gap-3 border-t pt-4">
-                            <Link
-                                href="/customer/login"
-                                className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-center text-sm font-semibold text-gray-700"
-                            >
-                                Login
-                            </Link>
+                        {/* Authentication */}
+                        {!customer ? (
+                            <div className="flex gap-3 border-t border-gray-200 pt-4">
 
-                            <Link
-                                href="/customer/register"
-                                className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-center text-sm font-semibold text-white"
-                            >
-                                Register
-                            </Link>
-                        </div>
+                                <Link
+                                    href="/customer/login"
+                                    onClick={closeMenu}
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold text-gray-700"
+                                >
+                                    <FiLogIn />
+                                    Login
+                                </Link>
+
+                                <Link
+                                    href="/customer/register"
+                                    onClick={closeMenu}
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white"
+                                >
+                                    <FiUserPlus />
+                                    Register
+                                </Link>
+
+                            </div>
+                        ) : (
+                            <div className="border-t border-gray-200 pt-4">
+
+                                <div className="mb-3 rounded-lg bg-gray-50 px-4 py-3">
+                                    <p className="text-xs text-gray-500">
+                                        Logged in as
+                                    </p>
+
+                                    <p className="font-semibold text-gray-800">
+                                        {customer.name}
+                                    </p>
+                                </div>
+
+                                <Link
+                                    href="/customer/logout"
+                                    method="post"
+                                    as="button"
+                                    onClick={closeMenu}
+                                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold text-gray-700 hover:border-red-500 hover:text-red-600"
+                                >
+                                    <FiLogOut />
+                                    Logout
+                                </Link>
+
+                            </div>
+                        )}
                     </nav>
                 </div>
             )}

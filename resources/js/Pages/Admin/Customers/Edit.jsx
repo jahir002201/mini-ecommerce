@@ -1,7 +1,8 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FiArrowLeft, FiSave, FiUsers } from 'react-icons/fi';
 
-export default function Edit({ customer }) {
+export default function Edit({ customer, admin }) {
     const { data, setData, post, processing, errors } = useForm({
         name: customer.name ?? '',
         email: customer.email ?? '',
@@ -22,7 +23,7 @@ export default function Edit({ customer }) {
     };
 
     return (
-        <>
+        <DashboardLayout admin={admin} title={`Edit Customer - ${customer.name}`}>
             <Head title={`Edit Customer - ${customer.name}`} />
 
             <div className="min-h-screen bg-gray-100">
@@ -229,6 +230,6 @@ export default function Edit({ customer }) {
                     </div>
                 </div>
             </div>
-        </>
+        </DashboardLayout>
     );
 }

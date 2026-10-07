@@ -1,6 +1,10 @@
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 
 export default function Footer() {
+    const { props } = usePage();
+
+    const customer = props.auth?.customer;
+
     return (
         <footer className="bg-gray-900 text-white">
             <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -66,21 +70,39 @@ export default function Footer() {
                             Account
                         </h3>
 
-                        <div className="mt-4 space-y-3">
-                            <Link
-                                href="/customer/login"
-                                className="block text-sm text-gray-400 hover:text-white"
-                            >
-                                Login
-                            </Link>
+                        {/* Customer Authentication */}
+                        {customer ? (
+                            <div className="mt-4 space-y-3">
 
-                            <Link
-                                href="/customer/register"
-                                className="block text-sm text-gray-400 hover:text-white"
-                            >
-                                Register
-                            </Link>
-                        </div>
+                                <Link
+                                    href="/customer/logout"
+                                    method="post"
+                                    as="button"
+                                    className="block text-sm text-gray-400 hover:text-white"
+                                >
+                                    Logout
+                                </Link>
+
+                            </div>
+                        ) : (
+                            <div className="mt-4 space-y-3">
+
+                                <Link
+                                    href="/customer/login"
+                                    className="block text-sm text-gray-400 hover:text-white"
+                                >
+                                    Login
+                                </Link>
+
+                                <Link
+                                    href="/customer/register"
+                                    className="block text-sm text-gray-400 hover:text-white"
+                                >
+                                    Register
+                                </Link>
+
+                            </div>
+                        )}
                     </div>
                 </div>
 

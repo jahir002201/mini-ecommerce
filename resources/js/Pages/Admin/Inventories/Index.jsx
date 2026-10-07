@@ -1,3 +1,4 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, router } from '@inertiajs/react';
 import {
     FiEdit,
@@ -6,7 +7,7 @@ import {
     FiTrash2,
 } from 'react-icons/fi';
 
-export default function Index({ inventories, flash }) {
+export default function Index({ inventories, flash, admin }) {
     const deleteInventory = (id) => {
         if (confirm('Are you sure you want to delete this inventory?')) {
             router.delete(route('admin.inventories.destroy', id), {
@@ -16,7 +17,7 @@ export default function Index({ inventories, flash }) {
     };
 
     return (
-        <>
+        <DashboardLayout admin={admin} title="Inventory">
             <Head title="Inventory" />
 
             <div className="min-h-screen bg-gray-100">
@@ -178,6 +179,6 @@ export default function Index({ inventories, flash }) {
                     </div>
                 </div>
             </div>
-        </>
+        </DashboardLayout>
     );
 }

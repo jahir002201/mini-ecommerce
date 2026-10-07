@@ -1,7 +1,8 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FiArrowLeft, FiSave, FiUsers } from 'react-icons/fi';
 
-export default function Create() {
+export default function Create({ admin }) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
@@ -21,7 +22,7 @@ export default function Create() {
     };
 
     return (
-        <>
+        <DashboardLayout admin={admin} title="Create Customer">
             <Head title="Create Customer" />
 
             <div className="min-h-screen bg-gray-100">
@@ -209,6 +210,6 @@ export default function Create() {
                     </div>
                 </div>
             </div>
-        </>
+        </DashboardLayout>
     );
 }

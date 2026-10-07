@@ -1,3 +1,4 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FiArrowLeft, FiLayers, FiSave } from 'react-icons/fi';
 
@@ -6,6 +7,7 @@ export default function Edit({
     products = [],
     sizes = [],
     colors = [],
+    admin
 }) {
     const { data, setData, put, processing, errors } = useForm({
         quantity: inventory.quantity ?? 0,
@@ -21,7 +23,7 @@ export default function Edit({
     };
 
     return (
-        <>
+        <DashboardLayout admin={admin} title="Edit Inventory">
             <Head title="Edit Inventory" />
 
             <div className="min-h-screen bg-gray-100">
@@ -195,6 +197,6 @@ export default function Edit({
                     </div>
                 </div>
             </div>
-        </>
+        </DashboardLayout>
     );
 }

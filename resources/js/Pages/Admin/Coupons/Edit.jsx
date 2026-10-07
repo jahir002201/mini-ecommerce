@@ -1,7 +1,8 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FiArrowLeft, FiSave, FiTag } from 'react-icons/fi';
 
-export default function Edit({ coupon }) {
+export default function Edit({ coupon, admin }) {
     const { data, setData, put, processing, errors } = useForm({
         name: coupon.name ?? '',
         discount: coupon.discount ?? '',
@@ -18,7 +19,7 @@ export default function Edit({ coupon }) {
     };
 
     return (
-        <>
+        <DashboardLayout admin={admin} title={`Edit Coupon - ${coupon.name}`}>
             <Head title={`Edit Coupon - ${coupon.name}`} />
 
             <div className="min-h-screen bg-gray-100">
@@ -202,6 +203,6 @@ export default function Edit({ coupon }) {
                     </div>
                 </div>
             </div>
-        </>
+        </DashboardLayout>
     );
 }

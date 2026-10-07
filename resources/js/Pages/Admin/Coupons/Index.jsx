@@ -1,8 +1,9 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
 import FlashMessage from '@/Components/FlashMessage';
 import { Head, Link, router } from '@inertiajs/react';
 import { FiEdit, FiPlus, FiTrash2, FiTag } from 'react-icons/fi';
 
-export default function Index({ coupons, flash }) {
+export default function Index({ coupons, flash, admin }) {
     const deleteCoupon = (id) => {
         if (confirm('Are you sure you want to delete this coupon?')) {
             router.delete(route('admin.coupons.destroy', id));
@@ -10,7 +11,7 @@ export default function Index({ coupons, flash }) {
     };
 
     return (
-        <>
+        <DashboardLayout admin={admin} title="Coupons">
             <Head title="Coupons" />
 
             <div className="min-h-screen bg-gray-100">
@@ -185,6 +186,6 @@ export default function Index({ coupons, flash }) {
                     </div>
                 </div>
             </div>
-        </>
+        </DashboardLayout>
     );
 }

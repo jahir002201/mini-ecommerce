@@ -22,6 +22,15 @@ class Product extends Model
         'subcategory_id',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'price' => 'decimal:2',
+            'discount' => 'decimal:2',
+            'after_discount' => 'decimal:2',
+        ];
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

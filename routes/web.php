@@ -18,13 +18,26 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ShopController;
 
 // Home
-
 Route::get('/', [
     HomeController::class,
     'index',
 ])->name('home');
+
+// About and Contact
+Route::get('/about', function () {
+    return inertia('About');
+})->name('about');
+
+Route::get('/contact', function () {
+    return inertia('Contact');
+})->name('contact');
+
+// Shop
+Route::get('/shop', [ ShopController::class, 'index', ])->name('shop.index'); 
+Route::get('/shop/{product:slug}', [ ShopController::class, 'show', ])->name('shop.show');
 
 Route::prefix('admin')->name('admin.')->group(function () {
 

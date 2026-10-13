@@ -30,6 +30,18 @@ export default function Dashboard({
             href: route("admin.categories.index"),
         },
         {
+            title: "Sizes",
+            value: stats.sizes ?? 0,
+            icon: FiGrid,
+            href: route("admin.sizes.index"),
+        },
+        {
+            title: "Colors",
+            value: stats.colors ?? 0,
+            icon: FiGrid,
+            href: route("admin.colors.index"),
+        },
+        {
             title: "Customers",
             value: stats.customers ?? 0,
             icon: FiUsers,

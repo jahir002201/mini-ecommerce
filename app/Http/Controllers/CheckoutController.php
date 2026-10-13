@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class CheckoutController extends Controller
@@ -30,11 +31,13 @@ class CheckoutController extends Controller
         }
 
         $subtotal = $cartItems->sum(function ($item) {
-            return (float) (
+            $price = (float) (
                 $item->product?->after_discount
                 ?? $item->product?->price
                 ?? 0
-            ) * $item->quantity;
+            );
+
+            return $price * (int) $item->quantity;
         });
 
         return Inertia::render('Customer/Checkout/Index', [
@@ -61,6 +64,10 @@ class CheckoutController extends Controller
 
         $customerId = auth('customer')->id();
 
+        /*
+         * Create the order and order items in one transaction.
+         * COD stock deduction is included in the same transaction.
+         */
         $order = DB::transaction(function () use (
             $validated,
             $customerId
@@ -71,14 +78,28 @@ class CheckoutController extends Controller
                 ->get();
 
             if ($cartItems->isEmpty()) {
-                abort(422, 'Your cart is empty.');
+                throw ValidationException::withMessages([
+                    'cart' => 'Your cart is empty.',
+                ]);
             }
 
             $subtotal = 0;
+            $inventoryRows = [];
 
+            // Validate products and check inventory before creating the order.
             foreach ($cartItems as $item) {
                 if (! $item->product) {
-                    abort(422, 'A product in your cart is unavailable.');
+                    throw ValidationException::withMessages([
+                        'cart' => 'A product in your cart is unavailable.',
+                    ]);
+                }
+
+                $quantity = (int) $item->quantity;
+
+                if ($quantity < 1 || $quantity > 100) {
+                    throw ValidationException::withMessages([
+                        'cart' => 'A product has an invalid quantity.',
+                    ]);
                 }
 
                 $price = (float) (
@@ -86,19 +107,44 @@ class CheckoutController extends Controller
                     ?? $item->product->price
                 );
 
-                if ($price < 0 || $item->quantity < 1) {
-                    abort(422, 'Invalid product price or quantity.');
+                if (! is_finite($price) || $price < 0) {
+                    throw ValidationException::withMessages([
+                        'cart' => 'A product has an invalid price.',
+                    ]);
                 }
 
-                $subtotal += $price * $item->quantity;
+                $subtotal += $price * $quantity;
+
+                $inventory = $this->findInventory(
+                    $item->product_id,
+                    $item->size_id,
+                    $item->color_id,
+                    true
+                );
+
+                if (! $inventory || $inventory->quantity < $quantity) {
+                    throw ValidationException::withMessages([
+                        'cart' => 'Insufficient stock for '
+                            . $item->product->name
+                            . '. Please update your cart.',
+                    ]);
+                }
+
+                $inventoryRows[] = [
+                    'inventory' => $inventory,
+                    'quantity' => $quantity,
+                ];
             }
 
-            $charge = (float) config('app.delivery_charge', 80);
             $subtotal = round($subtotal, 2);
+            $charge = (float) config('app.delivery_charge', 80);
             $total = round($subtotal + $charge, 2);
 
             $order = Order::create([
-                'order_id' => 'ORD-'.now()->format('YmdHis').'-'.Str::upper(Str::random(6)),
+                'order_id' => 'ORD-'
+                    . now()->format('YmdHis')
+                    . '-'
+                    . Str::upper(Str::random(6)),
                 'customer_id' => $customerId,
                 'sub_total' => $subtotal,
                 'total' => $total,
@@ -135,122 +181,186 @@ class CheckoutController extends Controller
                 ]);
             }
 
+            if ($validated['payment_method'] === 'cod') {
+                // Decrement stock only after all items have passed validation.
+                foreach ($inventoryRows as $row) {
+                    $row['inventory']->decrement(
+                        'quantity',
+                        $row['quantity']
+                    );
+                }
+
+                $order->update([
+                    'status' => 'processing',
+                    'payment_status' => 'pending',
+                ]);
+
+                Cart::where('customer_id', $customerId)->delete();
+            }
+
             return $order;
         });
 
-        // Cash on delivery: validate and decrement stock immediately.
         if ($validated['payment_method'] === 'cod') {
-            $this->fulfillCodOrder($order);
-
             return redirect()
                 ->route('customer.account')
-                ->with('success', 'Your order has been placed.');
+                ->with('success', 'Your COD order has been placed successfully.');
         }
 
-        return $this->startSslCommerzPayment($order, $validated);
+        return $this->startSslCommerzPayment($order);
     }
 
-    private function fulfillCodOrder(Order $order): void
+    /**
+     * Find the exact inventory combination for a product, size and color.
+     */
+    private function findInventory(
+        int $productId,
+        ?int $sizeId,
+        ?int $colorId,
+        bool $lock = false
+    ): ?Inventory {
+        $query = Inventory::where('product_id', $productId);
+
+        if ($sizeId === null) {
+            $query->whereNull('size_id');
+        } else {
+            $query->where('size_id', $sizeId);
+        }
+
+        if ($colorId === null) {
+            $query->whereNull('color_id');
+        } else {
+            $query->where('color_id', $colorId);
+        }
+
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first();
+    }
+
+    /**
+     * Start SSLCommerz hosted checkout.
+     */
+    private function startSslCommerzPayment(Order $order)
     {
-        DB::transaction(function () use ($order) {
-            $order = Order::whereKey($order->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        $storeId = config('services.sslcommerz.store_id');
+        $storePassword = config('services.sslcommerz.store_password');
 
-            if ($order->status !== 'pending') {
-                return;
-            }
+        if (! $storeId || ! $storePassword) {
+            return $this->paymentStartFailed(
+                $order,
+                'Online payment is not configured. Please contact support.'
+            );
+        }
 
-            $items = OrderProduct::where('order_id', $order->id)->get();
+        $billing = $order->billingDetails()->first();
 
-            // Check every item before changing any inventory.
-            foreach ($items as $item) {
-                $query = Inventory::where('product_id', $item->product_id);
+        if (! $billing) {
+            return $this->paymentStartFailed(
+                $order,
+                'Billing details were not found.'
+            );
+        }
 
-                $item->size_id === null
-                    ? $query->whereNull('size_id')
-                    : $query->where('size_id', $item->size_id);
-
-                $item->color_id === null
-                    ? $query->whereNull('color_id')
-                    : $query->where('color_id', $item->color_id);
-
-                $inventory = $query->lockForUpdate()->first();
-
-                if (! $inventory || $inventory->quantity < $item->quantity) {
-                    abort(422, 'Insufficient stock for one or more products.');
-                }
-            }
-
-            foreach ($items as $item) {
-                $query = Inventory::where('product_id', $item->product_id);
-
-                $item->size_id === null
-                    ? $query->whereNull('size_id')
-                    : $query->where('size_id', $item->size_id);
-
-                $item->color_id === null
-                    ? $query->whereNull('color_id')
-                    : $query->where('color_id', $item->color_id);
-
-                $inventory = $query->lockForUpdate()->firstOrFail();
-                $inventory->decrement('quantity', $item->quantity);
-            }
-
-            $order->update([
-                'status' => 'processing',
-                'payment_status' => 'pending',
-            ]);
-
-            Cart::where('customer_id', $order->customer_id)->delete();
-        });
-    }
-
-    private function startSslCommerzPayment(
-        Order $order,
-        array $billing
-    ) {
-        $sandbox = (bool) config('services.sslcommerz.sandbox');
+        $sandbox = filter_var(
+            config('services.sslcommerz.sandbox', true),
+            FILTER_VALIDATE_BOOLEAN
+        );
 
         $baseUrl = $sandbox
             ? 'https://sandbox.sslcommerz.com'
             : 'https://securepay.sslcommerz.com';
 
-        $response = Http::asForm()
-            ->timeout(30)
-            ->post($baseUrl.'/gwprocess/v4/api.php', [
-                'store_id' => config('services.sslcommerz.store_id'),
-                'store_passwd' => config('services.sslcommerz.store_password'),
-                'total_amount' => number_format((float) $order->total, 2, '.', ''),
-                'currency' => 'BDT',
-                'tran_id' => $order->order_id,
-                'success_url' => route('payment.success'),
-                'fail_url' => route('payment.fail'),
-                'cancel_url' => route('payment.cancel'),
-                'ipn_url' => route('payment.ipn'),
-                'shipping_method' => 'NO',
-                'product_name' => 'Mini E-Commerce Order '.$order->order_id,
-                'product_category' => 'E-Commerce',
-                'product_profile' => 'general',
-                'cus_name' => $billing['name'],
-                'cus_email' => $billing['email'],
-                'cus_add1' => $billing['address'],
-                'cus_city' => 'Dhaka',
-                'cus_postcode' => $billing['zip'] ?? '0000',
-                'cus_country' => 'Bangladesh',
-                'cus_phone' => $billing['mobile_number'],
-                'value_a' => (string) $order->id,
-            ]);
+        try {
+            $response = Http::asForm()
+                ->timeout(30)
+                ->post($baseUrl . '/gwprocess/v4/api.php', [
+                    'store_id' => $storeId,
+                    'store_passwd' => $storePassword,
 
-        $gatewayUrl = $response->json('GatewayPageURL');
+                    'total_amount' => number_format(
+                        (float) $order->total,
+                        2,
+                        '.',
+                        ''
+                    ),
+                    'currency' => 'BDT',
+                    'tran_id' => $order->order_id,
 
-        if (! $response->successful() || ! $gatewayUrl) {
-            return back()->with(
-                'error',
-                'Unable to start payment. Please try again.'
+                    'success_url' => route('payment.success'),
+                    'fail_url' => route('payment.fail'),
+                    'cancel_url' => route('payment.cancel'),
+                    'ipn_url' => route('payment.ipn'),
+
+                    'shipping_method' => 'NO',
+                    'product_name' => 'Mini E-Commerce Order',
+                    'product_category' => 'E-Commerce',
+                    'product_profile' => 'general',
+
+                    'cus_name' => $billing->name,
+                    'cus_email' => $billing->email,
+                    'cus_phone' => $billing->mobile_number,
+                    'cus_add1' => $billing->address,
+                    'cus_city' => 'Dhaka',
+                    'cus_postcode' => $billing->zip ?: '1000',
+                    'cus_country' => 'Bangladesh',
+
+                    'value_a' => (string) $order->id,
+                ]);
+
+            $result = $response->json() ?? [];
+            $gatewayUrl = $result['GatewayPageURL'] ?? null;
+            $gatewayHost = is_string($gatewayUrl)
+                ? parse_url($gatewayUrl, PHP_URL_HOST)
+                : null;
+
+            $allowedHosts = $sandbox
+                ? ['sandbox.sslcommerz.com']
+                : ['securepay.sslcommerz.com'];
+
+            if (
+                ! $response->successful()
+                || strtoupper((string) ($result['status'] ?? '')) !== 'SUCCESS'
+                || ! filter_var($gatewayUrl, FILTER_VALIDATE_URL)
+                || ! in_array($gatewayHost, $allowedHosts, true)
+            ) {
+                report(new \RuntimeException(
+                    'SSLCommerz session initialization failed. Order: '
+                    . $order->order_id
+                ));
+
+                return $this->paymentStartFailed(
+                    $order,
+                    'Unable to start online payment. Please try again.'
+                );
+            }
+
+            return Inertia::location($gatewayUrl);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return $this->paymentStartFailed(
+                $order,
+                'Unable to connect to the payment gateway. Please try again.'
             );
         }
+    }
 
-        return Inertia::location($gatewayUrl);
+    private function paymentStartFailed(Order $order, string $message)
+    {
+        // Do not overwrite a payment that has already been confirmed.
+        $order->refresh();
+
+        if ($order->payment_status !== 'paid') {
+            $order->update([
+                'payment_status' => 'failed',
+            ]);
+        }
+
+        return redirect()
+            ->route('customer.checkout.index')
+            ->with('error', $message);
     }
 }

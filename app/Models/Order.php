@@ -30,6 +30,11 @@ class Order extends Model
         'paid_at' => 'datetime',
     ];
 
+    //user
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);

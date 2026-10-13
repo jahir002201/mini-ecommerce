@@ -4,62 +4,97 @@ namespace App\Http\Controllers;
 
 use App\Models\Color;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class ColorController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $colors = Color::latest()->paginate(10);
+
+        return Inertia::render('Admin/Colors/Index', [
+            'colors' => $colors,
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return Inertia::render('Admin/Colors/Create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:50', 'unique:colors,name'],
+            'color_code' => [
+                'required',
+                'string',
+                'regex:/^#[0-9A-Fa-f]{6}$/',
+            ],
+        ]);
+
+        Color::create($validated);
+
+        return redirect()
+            ->route('admin.colors.index')
+            ->with('success', 'Color created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Color $color)
     {
-        //
+        return Inertia::render('Admin/Colors/Show', [
+            'color' => $color,
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Color $color)
     {
-        //
+        return Inertia::render('Admin/Colors/Edit', [
+            'color' => $color,
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Color $color)
     {
-        //
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('colors', 'name')->ignore($color->id),
+            ],
+            'color_code' => [
+                'required',
+                'string',
+                'regex:/^#[0-9A-Fa-f]{6}$/',
+            ],
+        ]);
+
+        $color->update($validated);
+
+        return redirect()
+            ->route('admin.colors.index')
+            ->with('success', 'Color updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Color $color)
     {
-        //
+        // Prevent deleting colors that are used by inventory or cart items.
+        if (
+            $color->inventories()->exists() ||
+            $color->carts()->exists()
+        ) {
+            return back()->with(
+                'error',
+                'This color is currently in use and cannot be deleted.'
+            );
+        }
+
+        $color->delete();
+
+        return redirect()
+            ->route('admin.colors.index')
+            ->with('success', 'Color deleted successfully.');
     }
 }

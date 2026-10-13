@@ -41,6 +41,16 @@ export default function AdminSidebar({ open, onClose }) {
             icon: FiLayers,
         },
         {
+            name: "Sizes",
+            href: route("admin.sizes.index"),
+            icon: FiGrid,
+        },
+        {
+            name: "Colors",
+            href: route("admin.colors.index"),
+            icon: FiGrid,
+        },
+        {
             name: "Products",
             href: route("admin.products.index"),
             icon: FiBox,
@@ -49,6 +59,11 @@ export default function AdminSidebar({ open, onClose }) {
             name: "Inventory",
             href: route("admin.inventories.index"),
             icon: FiPackage,
+        },
+        {
+            name: "Thumbnails",
+            href: route("admin.thumbnails.index"),
+            icon: FiGrid,
         },
         {
             name: "Customers",

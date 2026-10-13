@@ -16,6 +16,26 @@ export default function QuickActions() {
             iconClass: "bg-indigo-50 text-indigo-600",
         },
         {
+            title: "Add Subcategory", 
+            description: "Create new subcategory",
+            href: route("admin.subcategories.create"), 
+            icon: FiPlus, 
+            iconClass: "bg-indigo-50 text-indigo-600"},
+        {
+            title: "Add Size",
+            description: "Create new size",
+            href: route("admin.sizes.create"),
+            icon: FiPlus,
+            iconClass: "bg-indigo-50 text-indigo-600",
+        },
+        {
+            title: "Add Color",
+            description: "Create new color",
+            href: route("admin.colors.create"),
+            icon: FiPlus,
+            iconClass: "bg-indigo-50 text-indigo-600",
+        },
+        {
             title: "Add Product",
             description: "Create new product",
             href: route("admin.products.create"),

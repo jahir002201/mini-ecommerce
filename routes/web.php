@@ -23,6 +23,9 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\SslCommerzPaymentController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\SizeController;
+use App\Http\Controllers\ColorController;
+use App\Http\Controllers\ThumbnailController;
 
 Route::post('/payment/success', [
     SslCommerzPaymentController::class,
@@ -98,6 +101,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // SubCategory
         Route::resource('subcategories', SubcategoryController::class)
             ->except(['show']);
+        
+        // Size
+        Route::resource('sizes', SizeController::class);
+
+        // Color
+        Route::resource('colors', ColorController::class);
 
         // Product    
         Route::resource('products', ProductController::class)
@@ -106,6 +115,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Inventory
         Route::resource('inventories', InventoryController::class)
             ->except(['show']);
+        
+        // Thumbnail
+        Route::resource('thumbnails', ThumbnailController::class);
 
         // Orders
         Route::resource('orders', OrderController::class)

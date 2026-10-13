@@ -10,6 +10,8 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Customer;
+use App\Models\Size;
+use App\Models\Color;
 
 class DashboardController extends Controller
 {
@@ -31,6 +33,8 @@ class DashboardController extends Controller
                 'customers' => Customer::count(),
 
                 'orders' => Order::count(),
+                'size' => Size::count(),
+                'color' => Color::count(),
             ],
 
             'recentOrders' => $recentOrders,

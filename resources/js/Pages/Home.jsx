@@ -306,7 +306,7 @@ function ProductCard({ product }) {
     return (
         <div className="group overflow-hidden rounded-xl bg-gray-50 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
 
-            <Link href={`/shop/${product.id}`}>
+            <Link href={`/shop/${product.slug}`}>
 
                 <div className="aspect-square overflow-hidden bg-gray-100">
 

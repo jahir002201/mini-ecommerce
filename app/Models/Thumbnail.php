@@ -12,7 +12,7 @@ class Thumbnail extends Model
         'product_id',
     ];
 
-    public function product():BelongsTo
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }

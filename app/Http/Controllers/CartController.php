@@ -50,8 +50,8 @@ class CartController extends Controller
         $validated = $request->validate([
             'product_id' => ['required', 'exists:products,id'],
             'quantity' => ['required', 'integer', 'min:1', 'max:100'],
-            'size_id' => ['nullable', 'exists:sizes,id'],
-            'color_id' => ['nullable', 'exists:colors,id'],
+            'size_id' => ['nullable', 'integer', 'exists:sizes,id'],
+            'color_id' => ['nullable', 'integer', 'exists:colors,id'],
         ]);
 
         $customerId = auth('customer')->id();
@@ -60,25 +60,55 @@ class CartController extends Controller
 
         $sizeId = $validated['size_id'] ?? null;
         $colorId = $validated['color_id'] ?? null;
+        $quantity = (int) $validated['quantity'];
 
-        $cartItem = Cart::where('customer_id', $customerId)
-            ->where('product_id', $product->id)
-            ->where('size_id', $sizeId)
-            ->where('color_id', $colorId)
-            ->first();
+        $inventoryQuery = \App\Models\Inventory::query()
+            ->where('product_id', $product->id);
+
+        $sizeId === null
+            ? $inventoryQuery->whereNull('size_id')
+            : $inventoryQuery->where('size_id', $sizeId);
+
+        $colorId === null
+            ? $inventoryQuery->whereNull('color_id')
+            : $inventoryQuery->where('color_id', $colorId);
+
+        $inventory = $inventoryQuery->first();
+
+        if (!$inventory || $inventory->quantity < $quantity) {
+            return back()->withErrors([
+                'quantity' => 'The selected size/color combination is unavailable or out of stock.',
+            ]);
+        }
+
+        $cartQuery = Cart::where('customer_id', $customerId)
+            ->where('product_id', $product->id);
+
+        $sizeId === null
+            ? $cartQuery->whereNull('size_id')
+            : $cartQuery->where('size_id', $sizeId);
+
+        $colorId === null
+            ? $cartQuery->whereNull('color_id')
+            : $cartQuery->where('color_id', $colorId);
+
+        $cartItem = $cartQuery->first();
 
         if ($cartItem) {
-            $cartItem->increment(
-                'quantity',
-                $validated['quantity']
-            );
+            if ($inventory->quantity < $cartItem->quantity + $quantity) {
+                return back()->withErrors([
+                    'quantity' => 'Not enough stock for the requested quantity.',
+                ]);
+            }
+
+            $cartItem->increment('quantity', $quantity);
         } else {
             Cart::create([
                 'customer_id' => $customerId,
                 'product_id' => $product->id,
                 'size_id' => $sizeId,
                 'color_id' => $colorId,
-                'quantity' => $validated['quantity'],
+                'quantity' => $quantity,
             ]);
         }
 

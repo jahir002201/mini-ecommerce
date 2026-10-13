@@ -31,6 +31,30 @@ class Product extends Model
         ];
     }
 
+    public function sizes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Size::class,
+            'inventories',
+            'product_id',
+            'size_id'
+        )
+            ->whereNotNull('sizes.id')
+            ->distinct();
+    }
+
+    public function colors(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Color::class,
+            'inventories',
+            'product_id',
+            'color_id'
+        )
+            ->whereNotNull('colors.id')
+            ->distinct();
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

@@ -19,6 +19,30 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\SslCommerzPaymentController;
+use App\Http\Controllers\CheckoutController;
+
+Route::post('/payment/success', [
+    SslCommerzPaymentController::class,
+    'success',
+])->name('payment.success');
+
+Route::post('/payment/fail', [
+    SslCommerzPaymentController::class,
+    'fail',
+])->name('payment.fail');
+
+Route::post('/payment/cancel', [
+    SslCommerzPaymentController::class,
+    'cancel',
+])->name('payment.cancel');
+
+Route::post('/payment/ipn', [
+    SslCommerzPaymentController::class,
+    'ipn',
+])->name('payment.ipn');
 
 // Home
 Route::get('/', [
@@ -138,6 +162,38 @@ Route::prefix('customer')->name('customer.')->group(function () {
     // Authenticated Customer Routes
 
     Route::middleware('auth:customer')->group(function () {
+
+        Route::get('/cart', [CartController::class, 'index'])
+        ->name('cart.index');
+
+        Route::post('/cart', [CartController::class, 'store'])
+            ->name('cart.store');
+
+        Route::patch('/cart/{cart}', [CartController::class, 'update'])
+            ->name('cart.update');
+
+        Route::delete('/cart/{cart}', [CartController::class, 'destroy'])
+            ->name('cart.destroy');
+
+        // Wishlist
+        Route::get('/wishlist', [WishlistController::class, 'index'])
+            ->name('wishlist.index');
+
+        Route::post('/wishlist', [WishlistController::class, 'store'])
+            ->name('wishlist.store');
+
+        Route::delete('/wishlist/{wishlist}', [WishlistController::class, 'destroy'])
+            ->name('wishlist.destroy');
+
+        Route::get('/checkout', [
+            CheckoutController::class,
+            'index',
+        ])->name('checkout.index');
+
+        Route::post('/checkout', [
+            CheckoutController::class,
+            'store',
+        ])->name('checkout.store');
 
         Route::get('/account', [
             AccountController::class,

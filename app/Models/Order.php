@@ -17,6 +17,9 @@ class Order extends Model
         'charge',
         'payment_method',
         'status',
+        'payment_status',
+        'transaction_id',
+        'paid_at',
     ];
 
     protected $casts = [
@@ -24,6 +27,7 @@ class Order extends Model
         'total' => 'decimal:2',
         'discount' => 'decimal:2',
         'charge' => 'decimal:2',
+        'paid_at' => 'datetime',
     ];
 
     public function customer(): BelongsTo

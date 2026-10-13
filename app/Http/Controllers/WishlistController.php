@@ -4,62 +4,65 @@ namespace App\Http\Controllers;
 
 use App\Models\Wishlist;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class WishlistController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display the customer's wishlist.
      */
-    public function index()
+    public function index(): Response
     {
-        //
+        $wishlists = Wishlist::with([
+            'product:id,name,slug,price,after_discount,preview',
+        ])
+            ->where('customer_id', auth('customer')->id())
+            ->latest()
+            ->get();
+
+        return Inertia::render('Customer/Wishlist/Index', [
+            'wishlists' => $wishlists,
+        ]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Add a product to the wishlist.
      */
-    public function create()
+    public function store(Request $request): RedirectResponse
     {
-        //
+        $validated = $request->validate([
+            'product_id' => ['required', 'exists:products,id'],
+        ]);
+
+        Wishlist::firstOrCreate([
+            'customer_id' => auth('customer')->id(),
+            'product_id' => $validated['product_id'],
+        ]);
+
+        return back()->with(
+            'success',
+            'Product added to wishlist successfully.'
+        );
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Remove a product from the wishlist.
      */
-    public function store(Request $request)
-    {
-        //
-    }
+    public function destroy(
+        Wishlist $wishlist
+    ): RedirectResponse {
+        abort_unless(
+            (int) $wishlist->customer_id === (int) auth('customer')->id(),
+            403
+        );
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Wishlist $wishlist)
-    {
-        //
-    }
+        $wishlist->delete();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Wishlist $wishlist)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Wishlist $wishlist)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Wishlist $wishlist)
-    {
-        //
+        return back()->with(
+            'success',
+            'Product removed from wishlist.'
+        );
     }
 }

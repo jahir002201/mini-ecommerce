@@ -6,6 +6,8 @@ import {
     FiLogIn,
     FiUserPlus,
     FiLogOut,
+    FiShoppingCart,
+    FiHeart,
 } from "react-icons/fi";
 
 export default function HomeNavbar() {
@@ -14,14 +16,40 @@ export default function HomeNavbar() {
     const { url, props } = usePage();
 
     const customer = props.auth?.customer;
+    const cartCount = Number(props.cartCount ?? 0);
+    const wishlistCount = Number(props.wishlistCount ?? 0);
 
-    const isActive = (path) => {
-        return url === path;
-    };
+    const isActive = (path) => url === path;
 
     const closeMenu = () => {
         setOpen(false);
     };
+
+    // Reusable cart icon with count badge
+    const CartIcon = () => (
+        <span className="relative inline-flex">
+            <FiShoppingCart className="text-xl" />
+
+            {cartCount > 0 && (
+                <span className="absolute -right-3 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+                    {cartCount > 99 ? "99+" : cartCount}
+                </span>
+            )}
+        </span>
+    );
+
+    // Reusable wishlist icon with count badge
+    const WishlistIcon = () => (
+        <span className="relative inline-flex">
+            <FiHeart className="text-xl" />
+
+            {wishlistCount > 0 && (
+                <span className="absolute -right-3 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-pink-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+                    {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+            )}
+        </span>
+    );
 
     return (
         <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
@@ -37,7 +65,6 @@ export default function HomeNavbar() {
 
                 {/* Desktop Navigation */}
                 <nav className="hidden items-center gap-8 md:flex">
-
                     <Link
                         href="/"
                         className={`font-medium transition ${
@@ -84,9 +111,51 @@ export default function HomeNavbar() {
                 </nav>
 
                 {/* Desktop Right Side */}
-                <div className="hidden items-center gap-3 md:flex">
+                <div className="hidden items-center gap-4 md:flex">
+                    {customer ? (
+                        <>
+                            {/* Cart */}
+                            <Link
+                                href="/customer/cart"
+                                aria-label={`Cart, ${cartCount} items`}
+                                className={`flex items-center gap-2 font-medium transition ${
+                                    url.startsWith("/customer/cart")
+                                        ? "text-indigo-600"
+                                        : "text-gray-700 hover:text-indigo-600"
+                                }`}
+                            >
+                                <CartIcon />
+                            </Link>
 
-                    {!customer ? (
+                            {/* Wishlist */}
+                            <Link
+                                href="/customer/wishlist"
+                                aria-label={`Wishlist, ${wishlistCount} products`}
+                                className={`flex items-center gap-2 font-medium transition ${
+                                    url.startsWith("/customer/wishlist")
+                                        ? "text-pink-600"
+                                        : "text-gray-700 hover:text-pink-600"
+                                }`}
+                            >
+                                <WishlistIcon />
+                            </Link>
+
+                            <span className="text-sm font-medium text-gray-700">
+                                Hi, {customer.name}
+                            </span>
+
+                            {/* Logout */}
+                            <Link
+                                href="/customer/logout"
+                                method="post"
+                                as="button"
+                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-red-500 hover:text-red-600"
+                            >
+                                <FiLogOut />
+                                Logout
+                            </Link>
+                        </>
+                    ) : (
                         <>
                             <Link
                                 href="/customer/login"
@@ -104,22 +173,6 @@ export default function HomeNavbar() {
                                 Register
                             </Link>
                         </>
-                    ) : (
-                        <>
-                            <span className="text-sm font-medium text-gray-700">
-                                Hi, {customer.name}
-                            </span>
-
-                            <Link
-                                href="/customer/logout"
-                                method="post"
-                                as="button"
-                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-red-500 hover:text-red-600"
-                            >
-                                <FiLogOut />
-                                Logout
-                            </Link>
-                        </>
                     )}
                 </div>
 
@@ -129,6 +182,7 @@ export default function HomeNavbar() {
                     onClick={() => setOpen(!open)}
                     className="rounded-lg p-2 text-gray-700 hover:bg-gray-100 md:hidden"
                     aria-label="Toggle navigation menu"
+                    aria-expanded={open}
                 >
                     {open ? (
                         <FiX className="text-xl" />
@@ -195,10 +249,46 @@ export default function HomeNavbar() {
                             Contact
                         </Link>
 
+                        {/* Customer Cart and Wishlist */}
+                        {customer && (
+                            <>
+                                <Link
+                                    href="/customer/cart"
+                                    onClick={closeMenu}
+                                    className={`flex items-center gap-3 rounded-lg px-4 py-3 font-medium ${
+                                        url.startsWith("/customer/cart")
+                                            ? "bg-indigo-50 text-indigo-600"
+                                            : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                                    }`}
+                                >
+                                    <CartIcon />
+                                    <span>Cart</span>
+                                    <span className="ml-auto text-sm text-gray-500">
+                                        {cartCount} items
+                                    </span>
+                                </Link>
+
+                                <Link
+                                    href="/customer/wishlist"
+                                    onClick={closeMenu}
+                                    className={`flex items-center gap-3 rounded-lg px-4 py-3 font-medium ${
+                                        url.startsWith("/customer/wishlist")
+                                            ? "bg-pink-50 text-pink-600"
+                                            : "text-gray-700 hover:bg-pink-50 hover:text-pink-600"
+                                    }`}
+                                >
+                                    <WishlistIcon />
+                                    <span>Wishlist</span>
+                                    <span className="ml-auto text-sm text-gray-500">
+                                        {wishlistCount} saved
+                                    </span>
+                                </Link>
+                            </>
+                        )}
+
                         {/* Authentication */}
                         {!customer ? (
                             <div className="flex gap-3 border-t border-gray-200 pt-4">
-
                                 <Link
                                     href="/customer/login"
                                     onClick={closeMenu}
@@ -216,11 +306,9 @@ export default function HomeNavbar() {
                                     <FiUserPlus />
                                     Register
                                 </Link>
-
                             </div>
                         ) : (
                             <div className="border-t border-gray-200 pt-4">
-
                                 <div className="mb-3 rounded-lg bg-gray-50 px-4 py-3">
                                     <p className="text-xs text-gray-500">
                                         Logged in as
@@ -241,7 +329,6 @@ export default function HomeNavbar() {
                                     <FiLogOut />
                                     Logout
                                 </Link>
-
                             </div>
                         )}
                     </nav>

@@ -123,4 +123,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'delivery_charge' => env('DELIVERY_CHARGE', 80),
+
 ];

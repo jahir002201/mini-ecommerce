@@ -46,23 +46,48 @@ export default function Show({
         setQuantity((current) => Math.max(1, current - 1));
     };
 
+
     const addToCart = () => {
-        console.log("Add to cart:", {
-            product_id: product.id,
-            quantity,
-        });
+        router.post(
+            route("customer.cart.store"),
+            {
+                product_id: product.id,
+                quantity: quantity,
+            },
+            {
+                preserveScroll: true,
+            }
+        );
     };
 
     const buyNow = () => {
-        console.log("Buy now:", {
-            product_id: product.id,
-            quantity,
-        });
+        router.post(
+            route("customer.cart.store"),
+            {
+                product_id: product.id,
+                quantity: quantity,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.visit(route("customer.cart.index"));
+                },
+            }
+        );
     };
 
     const addToWishlist = () => {
-        console.log("Add to wishlist:", product.id);
+        router.post(
+            route("customer.wishlist.store"),
+            {
+                product_id: product.id,
+            },
+            {
+                preserveScroll: true,
+            }
+        );
     };
+
 
     return (
         <HomeLayout>

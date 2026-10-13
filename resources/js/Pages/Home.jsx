@@ -344,7 +344,7 @@ function ProductCard({ product }) {
                 )}
 
 
-                <Link href={`/shop/${product.id}`}>
+                <Link href={`/shop/${product.slug}`}>
                     <h3 className="mt-2 truncate text-lg font-semibold text-gray-800 hover:text-indigo-600">
                         {product.name}
                     </h3>
@@ -388,7 +388,7 @@ function ProductCard({ product }) {
 
 
                     <Link
-                        href={`/shop/${product.id}`}
+                        href={`/shop/${product.slug}`}
                         className="rounded-lg bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-100"
                     >
                         View

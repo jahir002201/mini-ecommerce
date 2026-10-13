@@ -5,6 +5,8 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Cart;
+use App\Models\Wishlist;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -36,6 +38,17 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
                 'customer' => Auth::guard('customer')->user(),
             ],
+
+
+            'cartCount' => fn () => Auth::guard('customer')->check()
+                ? Cart::where('customer_id', Auth::guard('customer')->id())
+                    ->sum('quantity')
+                : 0,
+
+            'wishlistCount' => fn () => Auth::guard('customer')->check()
+                ? Wishlist::where('customer_id', Auth::guard('customer')->id())
+                    ->count()
+                : 0,
 
             'flash' => [
             'success' => fn () => $request->session()->get('success'),

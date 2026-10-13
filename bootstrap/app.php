@@ -17,6 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'payment/success',
+            'payment/fail',
+            'payment/cancel',
+            'payment/ipn',
+        ]);
+        
         // Guest Redirect
 
         $middleware->redirectGuestsTo(function (Request $request) {
